@@ -1,11 +1,10 @@
 import pluginsMgr
 from Screens.Screen import Screen
 from Components.Label import Label
-#from Plugins.Plugin import PluginDescriptor
 from Components.ActionMap import ActionMap
 
 INFOMSG_DLG = """<screen position="center,center" size="500,370" title="InfoMsg Dialog" >
-	         <widget name="labelInfo" position="center,center" size="450,320" font="Regular;20" transparent="1" foregroundColor="#f2e000" halign="center" />
+                 <widget name="labelInfo" position="center,center" size="450,320" font="Regular;20" transparent="1" foregroundColor="#f2e000" halign="center" />
                  </screen>"""
 class InfoMsg(Screen):
     def __init__(self,session):
