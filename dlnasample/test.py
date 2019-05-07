@@ -26,7 +26,9 @@ def get_network_interface_ip_address(interface='eth0'):
         return interface[2][0]['addr']
 
 device_uuid = uuid.uuid4()
-local_ip_address = get_network_interface_ip_address('{BAFC7980-2EF6-48F1-99B7-5E0FE672F4BC}')
+localportal = '{BAFC7980-2EF6-48F1-99B7-5E0FE672F4BC}'
+wlanportal = '{4F692136-26AE-4B71-A0C0-71312D269F62}'
+local_ip_address = get_network_interface_ip_address(localportal)
 print 'local_ip_address : ', local_ip_address
 
 if __name__ == '__main__':

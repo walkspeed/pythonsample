@@ -1,5 +1,26 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import threading
+import cgi
+
+try:
+    import cElementTree as ET
+    import elementtree
+except ImportError:
+    try:
+        from elementtree import ElementTree as ET
+        import elementtree
+    except ImportError:
+        # this seems to be necessary with the python2.5 on the Maemo platform
+        try:
+            from xml.etree import cElementTree as ET
+            from xml import etree as elementtree
+        except ImportError:
+            try:
+                from xml.etree import ElementTree as ET
+                from xml import etree as elementtree
+            except ImportError:
+                raise ImportError("ElementTree: no ElementTree module found, "
+                                  "critical error")
 
 PORT_NUMBER = 8080
 
@@ -11,7 +32,6 @@ class UPNPHTTPServerHandler(BaseHTTPRequestHandler):
 
     # Handler for the GET requests
     def do_GET(self):
-
         if self.path == '/AVTransport_scpd.xml':
             self.send_response(200)
             self.send_header('Content-type', 'application/xml')
@@ -30,6 +50,93 @@ class UPNPHTTPServerHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(b"Not found.")
             return
+
+    def do_POST(self):
+        print '[UPNPHTTPServerHandler.do_POST] path : ',self.path
+        print '[UPNPHTTPServerHandler.do_POST] headers : ',self.headers
+        form = cgi.FieldStorage(
+            fp=self.rfile,
+            headers=self.headers,
+            environ={'REQUEST_METHOD':'POST',
+            'CONTENT_TYPE':self.headers['Content-Type'],
+            })
+        print '[UPNPHTTPServerHandler.do_POST] form : ',form
+        """while 1:
+            line = form.file.readline(1<<16)
+            if not line:
+                break
+            print 'line : ', line"""
+        postdata = form.file.read()
+        print 'data type : ',type(postdata)
+        print '[UPNPHTTPServerHandler.form.file]', postdata
+
+        tree = self.parse_xml(postdata)
+
+        body = tree.find('{http://schemas.xmlsoap.org/soap/envelope/}Body')
+        method = body.getchildren()[0]
+        methodName = method.tag
+        ns = None
+
+        if methodName.startswith('{') and methodName.rfind('}') > 1:
+            ns, methodName = methodName[1:].split('}')
+
+        args = []
+        kwargs = {}
+        for child in method.getchildren():
+            kwargs[child.tag] = self.decode_result(child)
+            args.append(kwargs[child.tag])
+        
+        print '[UPNPHTTPServerHandler] methodName : ', methodName
+        print '[UPNPHTTPServerHandler] args : ', args
+
+    def decode_result(self, element):
+        type = element.get('{http://www.w3.org/1999/XMLSchema-instance}type')
+        if type is not None:
+            try:
+                prefix, local = type.split(":")
+                if prefix == 'xsd':
+                    type = local
+            except ValueError:
+                pass
+
+        if type in ("integer", "int"):
+            return int(element.text)
+        elif type in ("float", "double"):
+            return float(element.text)
+        elif type == "boolean":
+            return element.text == "true"
+        else:
+            return element.text or ""
+
+    def parse_xml(self, data, encoding="utf-8", dump_invalid_data=False):
+        try:
+            parser = ET.XMLParser(encoding=encoding)
+        except exceptions.TypeError:
+            parser = ET.XMLParser()
+
+        # my version of twisted.web returns page_infos as a dictionary in
+        # the second item of the data list
+        # :fixme: This must be handled where twisted.web is fetching the data
+        if isinstance(data, (list, tuple)):
+            data = data[0]
+
+        try:
+            data = data.encode(encoding)
+        except UnicodeDecodeError:
+            pass
+
+        # Guess from who we're getting this?
+        data = data.replace('\x00', '')
+        try:
+            parser.feed(data)
+        except Exception, error:
+            if dump_invalid_data:
+                print error, repr(data)
+            parser.close()
+            raise
+        else:
+            return ET.ElementTree(parser.close())
+
 
     def get_device_xml(self):
         """
@@ -53,7 +160,6 @@ class UPNPHTTPServerHandler(BaseHTTPRequestHandler):
         <UDN>uuid:{uuid}</UDN>
         <serviceList>
             <service>
-                <URLBase>http://xxx.yyy.zzz.aaaa:5000</URLBase>
                 <serviceType>urn:schemas-upnp-org:service:AVTransport:1</serviceType>
                 <serviceId>urn:upnp-org:serviceId:AVTransport</serviceId>
                 <controlURL>AVTransport_control</controlURL>
