@@ -1,11 +1,14 @@
 
-from dlna.ssdp import SSDPServer
+#from dlna.ssdp import SSDPServer
+from dlna.ssdpserver import ssdpServer
 from dlna.httpserver import UPNPHTTPServer
 
 import uuid
 import netifaces as ni
 from time import sleep
 import logging
+
+#logging.basicConfig()
 
 def get_network_interface_ip_address(interface='eth0'):
     """
@@ -45,6 +48,22 @@ if __name__ == '__main__':
 
     http_server.start()
 
-    ssdp = SSDPServer()
+    ssdp = ssdpServer()
     ssdp.register('local','uuid:{}::upnp:rootdevice'.format(device_uuid),'upnp:rootdevice','http://{}:8088/TxMediaRenderer_desc.xml'.format(local_ip_address))
-    ssdp.run()
+    ssdp.start()#run()
+
+    while True:
+        cmd = raw_input()
+        print 'cmd : ',cmd
+        if cmd is None:
+            continue
+        if cmd == 'quit':
+            break
+    
+    #ssdp.stop()
+    #ssdp.join()
+    #ssdp.destroy()
+    ssdp.shutdown()
+    ssdp.server_close()
+    http_server.stop()
+    http_server.join()

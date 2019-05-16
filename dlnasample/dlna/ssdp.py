@@ -16,6 +16,7 @@ import socket
 import logging
 from email.utils import formatdate
 from errno import ENOPROTOOPT
+import threading
 
 SSDP_PORT = 1900
 SSDP_ADDR = '239.255.255.250'
@@ -25,13 +26,14 @@ SERVER_ID = 'ZeWaren example SSDP Server'
 logger = logging.getLogger()
 
 
-class SSDPServer:
+class SSDPServer(threading.Thread):
     """A class implementing a SSDP server.  The notify_received and
     searchReceived methods are called when the appropriate type of
     datagram is received by the server."""
     known = {}
 
     def __init__(self):
+        threading.Thread.__init__(self)
         self.sock = None
 
     def run(self):
@@ -60,7 +62,17 @@ class SSDPServer:
                 self.datagram_received(data, addr)
             except socket.timeout:
                 continue
+            except socket.error as e:
+                print '[SSDPServer.run] socket.error : ', e
+                break
         self.shutdown()
+    
+    def stop(self):
+        self.sock.shutdown(0)
+
+    def destroy(self):
+        self.sock.shutdown(2)
+        self.sock.close()
 
     def shutdown(self):
         for st in self.known:
@@ -198,7 +210,7 @@ class SSDPServer:
 
     def do_byebye(self, usn):
         """Do byebye"""
-
+        print 'Sending byebye notification for %s' % usn
         logger.info('Sending byebye notification for %s' % usn)
 
         resp = [

@@ -38,6 +38,8 @@ class UPNPHTTPServerHandler(BaseHTTPRequestHandler):
     """
 
     # Handler for the GET requests
+    def log_message(self, format, *args):
+        pass
     def do_GET(self):
         if self.path == '/AVTransport_scpd.xml':
             if self.path in soapcmd.soapcmd.keys():
@@ -259,3 +261,6 @@ class UPNPHTTPServer(threading.Thread):
 
     def run(self):
         self.server.serve_forever()
+
+    def stop(self):
+        self.server.shutdown()
