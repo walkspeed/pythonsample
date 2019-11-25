@@ -83,7 +83,8 @@ class ssdpRequestHandler( DatagramRequestHandler ):
     def send_it(self, response, destination, delay, usn):
         logger.debug('send discovery response delayed by %ds for %s to %r' % (delay, usn, destination))
         try:
-            self.socket.sendto(response.encode(), destination)
+            #self.socket.sendto(response.encode(), destination)
+            self.wfile.write(response.encode())
         except (AttributeError, socket.error) as msg:
             logger.warning("failure sending out byebye notification: %r" % msg)
 

@@ -46,7 +46,7 @@ class UPNPHTTPServerHandler(BaseHTTPRequestHandler):
                 self.send_response(200)
                 self.send_header('Content-type', 'application/xml')
                 self.end_headers()
-                self.wfile.write(soapcmd.soapcmd[self.path].encode())#(self.get_wsd_xml().encode())
+                self.wfile.write(soapcmd.soapcmd[self.path].encode())
             else:
                 self.send_response(404)
                 self.send_header('Content-type', 'text/html')
@@ -83,16 +83,16 @@ class UPNPHTTPServerHandler(BaseHTTPRequestHandler):
                 })
 
             postdata = form.file.read()
-            print '[UPNPHTTPServerHandler.form.file]', postdata
+            #print '[UPNPHTTPServerHandler.form.file]', postdata
 
             tree = self.parse_xml(postdata)
 
             body = tree.find('{http://schemas.xmlsoap.org/soap/envelope/}Body')
-            print '[UPNPHTTPServerHandler] body : ',ET.tostring(body)
+            #print '[UPNPHTTPServerHandler] body : ',ET.tostring(body)
             method = body.getchildren()[0]
-            print '[UPNPHTTPServerHandler] method : ',ET.tostring(method)
+            #print '[UPNPHTTPServerHandler] method : ',ET.tostring(method)
             methodName = method.tag
-            print '[UPNPHTTPServerHandler] methodName : ', methodName
+            #print '[UPNPHTTPServerHandler] methodName : ', methodName
             ns = None
 
             if methodName.startswith('{') and methodName.rfind('}') > 1:
@@ -104,9 +104,9 @@ class UPNPHTTPServerHandler(BaseHTTPRequestHandler):
                 kwargs[child.tag] = self.decode_result(child)
                 args.append(kwargs[child.tag])
             
-            print '[UPNPHTTPServerHandler] methodName : ', methodName
-            print '[UPNPHTTPServerHandler] args : ', args
-            print '[UPNPHTTPServerHandler] kwargs : ', kwargs
+            #print '[UPNPHTTPServerHandler] methodName : ', methodName
+            #print '[UPNPHTTPServerHandler] args : ', args
+            #print '[UPNPHTTPServerHandler] kwargs : ', kwargs
 
             resultxml = ''
             if service in serviceManager.services.keys():
